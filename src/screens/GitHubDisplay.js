@@ -1,20 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TextInput, Button, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, FlatList, TextInput, Button, TouchableOpacity, ActivityIndicator, Linking, Dimensions } from 'react-native';
 import axios from 'axios';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Octicons from 'react-native-vector-icons/Octicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 const GitHubData = (navigation) => {
-  const [repositories, setRepositories] = useState([]);
-  const [visibleRepos, setVisibleRepos] = useState([]);
+  const [Repos, setRepos] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [searchText, setSearchText] = useState('');
   const [page, setPage] = useState(1);
   const perPage = 10;
+
+  const flatListRef = useRef();
+  const { height: containerHeight } = Dimensions.get('window');
+  const [constantCheck, setConstantCheck] = useState(0);
+
+  // =====================================================================================
+  // UseEffects
+  // =====================================================================================
 
   useEffect(() => {
     const token = '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';
@@ -44,8 +52,8 @@ const GitHubData = (navigation) => {
           return;
         }
 
-        const newVisibleRepos = [...visibleRepos, ...newItems];
-        setVisibleRepos(newVisibleRepos);
+        const newVisibleRepos = [...Repos, ...newItems];
+        setRepos(newVisibleRepos);
         setPage(page + 1);
         setLoading(false);
       })
@@ -55,61 +63,49 @@ const GitHubData = (navigation) => {
       });
   }, [page]);
 
-  useEffect(() => {
-    const token = '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';
-
-    axios
-      .get('https://api.github.com/orgs/react-native-community/repos', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((response) => {
-        setRepositories(response.data);
-      })
-      .catch((error) => {
-        console.error('Error fetching data from GitHub:', error);
-      });
-  }, []);
-
-  useEffect(() => {
-    console.log('repositories', repositories)
-  })
+  // =====================================================================================
+  // Functions
+  // =====================================================================================
 
   const loadMoreData = () => {
-    if (loading) return; // Prevent multiple requests
-    setLoading(true);
-
+    if (loading) {
+      return;
+    }
+  
     const nextPage = page + 1;
     const startIndex = (nextPage - 1) * perPage;
-    const endIndex = nextPage * perPage;
+    const endIndex = Math.min(nextPage * perPage, Repos.length);
 
-    if (endIndex <= data.length) {
-      const newVisibleRepos = [...visibleRepos, ...data.slice(startIndex, endIndex)];
-      setVisibleRepos(newVisibleRepos);
-      setPage(nextPage);
-    }
-
-    setLoading(false);
+    setConstantCheck(endIndex, () => {
+      if (constantCheck !== endIndex) {
+        setLoading(true);
+  
+        if (endIndex <= Repos.length) {
+          const newVisibleRepos = [...Repos, ...Repos.slice(startIndex, endIndex)];
+          setRepos(newVisibleRepos);
+          setPage(nextPage);
+        }
+  
+        setLoading(false);
+      }
+    });
   };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity>
+    <TouchableOpacity
+      style={{ zIndex: 2 }}
+      onPress={() => {
+        Linking.openURL(item.html_url);
+      }}
+    >
       <View style={{
         position: 'absolute',
         alignSelf: 'flex-end',
         top: 20,
         right: 20,
-        zIndex: 2,
+        zIndex: 3,
       }}>
-        <Text style={{
-          borderWidth: 1,
-          borderRadius: 15,
-          paddingHorizontal: 10,
-          marginLeft: 5,
-        }}>
-          {item.visibility}
-        </Text>
+        <MaterialIcons name='public' size={25} />
       </View>
       <View style={{
         width: 350,
@@ -127,21 +123,29 @@ const GitHubData = (navigation) => {
         shadowOpacity: 0.22,
         shadowRadius: 3.22,
         elevation: 5,
-        zIndex: 1,
+        zIndex: 0,
       }}>
-        <View style={{ flexDirection: 'row' }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
           <Text style={{
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            paddingRight: 25,
           }}>
             {item.name}
           </Text>
         </View>
 
-        <View style={{ marginTop: 5, flexDirection: 'row', flexWrap: 'wrap', }}>
+        <View style={{ marginTop: 5 }}>
+          <Text>
+            {item.description}
+          </Text>
+        </View>
+
+        <View style={{ marginTop: item.topics.length > 0 ? 5 : 0, flexDirection: 'row', flexWrap: 'wrap', }}>
           {item.topics.map((topic, i) => {
             return (
-              <>
-                <Text style={{
+              <Text
+                key={i}
+                style={{
                   backgroundColor: '#78A2CC',
                   // color: 'white',
                   borderRadius: 15,
@@ -150,18 +154,12 @@ const GitHubData = (navigation) => {
                   marginRight: 5,
                   marginBottom: 5,
                 }}>
-                  {topic}
-                </Text>
-              </>
+                {topic}
+              </Text>
             )
           })}
         </View>
 
-        <View style={{ marginTop: item.topics.length > 0 ? 5 : 0, height: 50 }}>
-          <Text>
-            {item.description}
-          </Text>
-        </View>
         <View style={{ flexDirection: 'row' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', width: '30%' }}>
             <FontAwesome name='code' size={20} />
@@ -192,6 +190,8 @@ const GitHubData = (navigation) => {
     </TouchableOpacity>
   );
 
+  // =====================================================================================
+
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#BFD4DB' }}>
       <View style={{
@@ -206,6 +206,7 @@ const GitHubData = (navigation) => {
         <View style={{
           flexDirection: 'row',
           alignItems: 'center',
+          backgroundColor: 'white',
 
           borderWidth: 1,
           borderRadius: 10,
@@ -230,6 +231,19 @@ const GitHubData = (navigation) => {
           </View>
         </View>
 
+        {/* {
+          loading &&
+          <ActivityIndicator
+            size="large"
+            style={{
+              position: 'absolute',
+              justifyContent: 'center',
+              alignContent: 'center',
+
+              top: '50%'
+            }}
+          />
+        } */}
         {searchText == '' ?
           <FlatList
             style={{
@@ -241,11 +255,11 @@ const GitHubData = (navigation) => {
               height: '70%'
             }}
             // numColumns={2}
-            data={visibleRepos}
+            data={Repos}
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderItem}
             onEndReached={loadMoreData}
-            onEndReachedThreshold={0.1}
+            onEndReachedThreshold={0.5}
           />
           :
           <FlatList
@@ -258,7 +272,7 @@ const GitHubData = (navigation) => {
               height: '70%'
             }}
             // numColumns={2}
-            data={visibleRepos.filter((repo) => {
+            data={Repos.filter((repo) => {
               if (searchText !== '') {
                 const searchLowerCase = searchText.toLowerCase();
 
@@ -276,6 +290,7 @@ const GitHubData = (navigation) => {
             onEndReachedThreshold={0.1}
           />
         }
+        {loading && <ActivityIndicator size="large" />}
       </View>
     </GestureHandlerRootView>
   );
