@@ -10,6 +10,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 const GitHubData = (navigation) => {
   const [Repos, setRepos] = useState([]);
+  const [AllRepos, setAllRepos] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [searchText, setSearchText] = useState('');
@@ -25,16 +26,16 @@ const GitHubData = (navigation) => {
   // =====================================================================================
 
   useEffect(() => {
-    const token = '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';
+    const fetchData = async () => {
+      if (loading) {
+        return;
+      }
 
-    if (loading) {
-      return
-    };
+      setLoading(true);
 
-    setLoading(true);
-
-    axios
-      .get('https://api.github.com/orgs/react-native-community/repos', {
+      const token = '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';
+      const apiUrl = 'https://api.github.com/orgs/react-native-community/repos';
+      const config = {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -42,11 +43,24 @@ const GitHubData = (navigation) => {
           page,
           per_page: perPage,
         },
-      })
-      .then((response) => {
-        const newItems = response.data;
+      };
 
-        // If newItems is empty, it means there are no more items to load
+      try {
+        // Send the first request to get data without parameters
+        const responseWithoutParams = await axios.get(apiUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Send the second request to get paginated data
+        const responseWithParams = await axios.get(apiUrl, config);
+
+        const allRepos = responseWithoutParams.data;
+        const newItems = responseWithParams.data;
+
+        setAllRepos(allRepos);
+
         if (newItems.length === 0) {
           setLoading(false);
           return;
@@ -56,12 +70,15 @@ const GitHubData = (navigation) => {
         setRepos(newVisibleRepos);
         setPage(page + 1);
         setLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('Error fetching data from GitHub:', error);
         setLoading(false);
-      });
+      }
+    };
+
+    fetchData();
   }, [page]);
+
 
   // =====================================================================================
   // Functions
@@ -71,27 +88,27 @@ const GitHubData = (navigation) => {
     if (loading) {
       return;
     }
-  
+
     const nextPage = page + 1;
     const startIndex = (nextPage - 1) * perPage;
     const endIndex = Math.min(nextPage * perPage, Repos.length);
 
-    setConstantCheck(endIndex, () => {
-      if (constantCheck !== endIndex) {
-        setLoading(true);
-  
-        if (endIndex <= Repos.length) {
-          const newVisibleRepos = [...Repos, ...Repos.slice(startIndex, endIndex)];
-          setRepos(newVisibleRepos);
-          setPage(nextPage);
-        }
-  
-        setLoading(false);
+    setConstantCheck(endIndex)
+    if (constantCheck !== endIndex) {
+      setLoading(true);
+
+      if (endIndex <= Repos.length) {
+        const newVisibleRepos = [...Repos, ...Repos.slice(startIndex, endIndex)];
+        setRepos(newVisibleRepos);
+        setPage(nextPage);
       }
-    });
+
+      setLoading(false);
+    };
   };
 
   const renderItem = ({ item }) => (
+
     <TouchableOpacity
       style={{ zIndex: 2 }}
       onPress={() => {
@@ -164,7 +181,7 @@ const GitHubData = (navigation) => {
           <View style={{ flexDirection: 'row', alignItems: 'center', width: '30%' }}>
             <FontAwesome name='code' size={20} />
             <Text style={{ marginLeft: 5 }}>
-              {item.language}
+              {item.language || item.language !== null ? item.language : '-'}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10, width: '20%' }}>
@@ -208,9 +225,16 @@ const GitHubData = (navigation) => {
           alignItems: 'center',
           backgroundColor: 'white',
 
-          borderWidth: 1,
           borderRadius: 10,
           marginTop: 10,
+
+          shadowOffset: {
+            width: 0,
+            height: 1,
+          },
+          shadowOpacity: 0.22,
+          shadowRadius: 3.22,
+          elevation: 5,
         }}>
           <TextInput
             style={{
@@ -272,11 +296,11 @@ const GitHubData = (navigation) => {
               height: '70%'
             }}
             // numColumns={2}
-            data={Repos.filter((repo) => {
+            data={AllRepos.filter((allrepo) => {
               if (searchText !== '') {
                 const searchLowerCase = searchText.toLowerCase();
 
-                if (repo.name.toLowerCase().includes(searchLowerCase) || repo.description.toLowerCase().includes(searchLowerCase)) {
+                if (allrepo.name.toLowerCase().includes(searchLowerCase) || allrepo.description.toLowerCase().includes(searchLowerCase)) {
                   return true;
                 }
                 else {
@@ -286,8 +310,8 @@ const GitHubData = (navigation) => {
             })}
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderItem}
-            onEndReached={loadMoreData}
-            onEndReachedThreshold={0.1}
+          // onEndReached={loadMoreData}
+          // onEndReachedThreshold={0.1}
           />
         }
         {loading && <ActivityIndicator size="large" />}
