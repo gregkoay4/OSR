@@ -106,6 +106,16 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    lintOptions {
+        checkReleaseBuilds false
+    }
+    applicationVariants.all { variant ->
+        if (variant.name == 'lintAnalyzeDebug') {
+            variant.registerPostJavacGeneratedBytecode(fileTree('build/intermediates/javac/debug') {
+                exclude(['**/R.class', '**/R$*.class', '**/BuildConfig.*'])
+            })
+        }
+    }
 }
 
 dependencies {
