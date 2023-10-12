@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, FlatList, TextInput, Button, TouchableOpacity, ActivityIndicator, Linking, Dimensions } from 'react-native';
+import { View, Text, FlatList, TextInput, Button, TouchableOpacity, ActivityIndicator, Linking, Dimensions, Image, ScrollView } from 'react-native';
 import axios from 'axios';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -7,6 +7,9 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Octicons from 'react-native-vector-icons/Octicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+
+import osr_title from '../assests/image/osr_title.png'
+import osr_title_filled from '../assests/image/osr_title_filled.png'
 
 const GitHubData = (navigation) => {
   const [Repos, setRepos] = useState([]);
@@ -110,7 +113,7 @@ const GitHubData = (navigation) => {
   const renderItem = ({ item }) => (
 
     <TouchableOpacity
-      style={{ zIndex: 2 }}
+      style={{ zIndex: 2, alignSelf: 'center' }}
       onPress={() => {
         Linking.openURL(item.html_url);
       }}
@@ -118,17 +121,17 @@ const GitHubData = (navigation) => {
       <View style={{
         position: 'absolute',
         alignSelf: 'flex-end',
-        top: 20,
-        right: 20,
+        marginTop: 8,
+        right: 10,
         zIndex: 3,
       }}>
-        <MaterialIcons name='public' size={25} />
+        <MaterialIcons name='public' size={25} color={'#01303f'} />
       </View>
       <View style={{
-        width: 350,
+        width: Dimensions.get('screen').width - 50,
         // height: 200,
-        margin: 10,
-        backgroundColor: '#A4C3D2',
+        marginBottom: 10,
+        backgroundColor: '#89d6fb',
         padding: 10,
 
         borderRadius: 15,
@@ -145,6 +148,7 @@ const GitHubData = (navigation) => {
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
           <Text style={{
             fontWeight: 'bold',
+            color: '#01303f',
             paddingRight: 25,
           }}>
             {item.name}
@@ -152,19 +156,19 @@ const GitHubData = (navigation) => {
         </View>
 
         <View style={{ marginTop: 5 }}>
-          <Text>
+          <Text style={{ color: '#4C4C4C', }}>
             {item.description}
           </Text>
         </View>
 
-        <View style={{ marginTop: item.topics.length > 0 ? 5 : 0, flexDirection: 'row', flexWrap: 'wrap', }}>
+        <View style={{ marginTop: 5, flexDirection: 'row', flexWrap: 'wrap', }}>
           {item.topics.map((topic, i) => {
             return (
               <Text
                 key={i}
                 style={{
-                  backgroundColor: '#78A2CC',
-                  // color: 'white',
+                  backgroundColor: '#02a9f7',
+                  color: '#d4f0fc',
                   borderRadius: 15,
                   padding: 5,
                   paddingHorizontal: 10,
@@ -179,26 +183,26 @@ const GitHubData = (navigation) => {
 
         <View style={{ flexDirection: 'row' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', width: '30%' }}>
-            <FontAwesome name='code' size={20} />
-            <Text style={{ marginLeft: 5 }}>
+            <FontAwesome name='code' size={20} color={'#4C4C4C'} />
+            <Text style={{ marginLeft: 5, color: '#4C4C4C', }}>
               {item.language || item.language !== null ? item.language : '-'}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10, width: '20%' }}>
-            <FontAwesome name='code-fork' size={20} />
-            <Text style={{ marginLeft: 5 }}>
+            <FontAwesome name='code-fork' size={20} color={'#4C4C4C'} />
+            <Text style={{ marginLeft: 5, color: '#4C4C4C', }}>
               {item.forks_count}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10, width: '20%' }}>
-            <Octicons name='issue-opened' size={20} />
-            <Text style={{ marginLeft: 5 }}>
+            <Octicons name='issue-opened' size={20} color={'#4C4C4C'} />
+            <Text style={{ marginLeft: 5, color: '#4C4C4C', }}>
               {item.open_issues_count}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10, width: '20%' }}>
-            <FontAwesome name='star-o' size={20} />
-            <Text style={{ marginLeft: 5 }}>
+            <FontAwesome name='star-o' size={20} color={'#4C4C4C'} />
+            <Text style={{ marginLeft: 5, color: '#4C4C4C', }}>
               {item.stargazers_count}
             </Text>
           </View>
@@ -210,18 +214,29 @@ const GitHubData = (navigation) => {
   // =====================================================================================
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#BFD4DB' }}>
+    <GestureHandlerRootView style={{ flex: 2, backgroundColor: '#F4FCFF', }}>
       <View style={{
         alignItems: 'center',
-        marginHorizontal: 10,
+        // marginHorizontal: 10,
       }}>
-        <Text style={{
+        {/* <Text style={{
           marginTop: 15,
           fontSize: 50,
           fontWeight: 'bold'
-        }}>O.S.R</Text>
+        }}>O.S.R</Text> */}
+        <Image
+          style={{
+            // width: Dimensions.get('screen').width /2,
+            height: 100,
+            backgroundColor: '#89D6FB'
+          }}
+          // resizeMethod='scale'
+          resizeMode='contain'
+          source={osr_title_filled}
+        />
         <View style={{
           flexDirection: 'row',
+          width: Dimensions.get('screen').width - 50,
           alignItems: 'center',
           backgroundColor: 'white',
 
@@ -238,10 +253,12 @@ const GitHubData = (navigation) => {
         }}>
           <TextInput
             style={{
-              width: '75%',
+              width: '85%',
               paddingLeft: 15,
+              color: 'black',
             }}
             placeholder="Search repositories/description"
+            placeholderTextColor={'#C5C5C5'}
             onChangeText={(text) => {
               setSearchText(text);
             }}
@@ -251,7 +268,7 @@ const GitHubData = (navigation) => {
             marginLeft: 5,
             padding: 10,
           }}>
-            <Ionicons name='search' size={30} />
+            <Ionicons name='search' size={30} color={'#01303f'} />
           </View>
         </View>
 
@@ -270,15 +287,13 @@ const GitHubData = (navigation) => {
         } */}
         {searchText == '' ?
           <FlatList
+            showsVerticalScrollIndicator={false}
             style={{
-              // backgroundColor: 'red',
-              // width: 100,
-              // height: 100,
-              // margin: 10,
+              // width: Dimensions.get('screen').width - 50,
               marginTop: 20,
-              height: '70%'
+              marginBottom: 10,
+              height: '70%',
             }}
-            // numColumns={2}
             data={Repos}
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderItem}
@@ -287,15 +302,11 @@ const GitHubData = (navigation) => {
           />
           :
           <FlatList
+            showsVerticalScrollIndicator={false}
             style={{
-              // backgroundColor: 'red',
-              // width: 100,
-              // height: 100,
-              // margin: 10,
               marginTop: 20,
               height: '70%'
             }}
-            // numColumns={2}
             data={AllRepos.filter((allrepo) => {
               if (searchText !== '') {
                 const searchLowerCase = searchText.toLowerCase();
